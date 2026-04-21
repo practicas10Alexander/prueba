@@ -1,0 +1,100 @@
+import { Component, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { AppMenuitem } from './app.menuitem';
+import { AuthService } from '@/app/core/services/auth.service';
+
+@Component({
+    selector: '[app-menu]',
+    standalone: true,
+    imports: [CommonModule, AppMenuitem, RouterModule],
+    template: `<ul class="layout-menu">
+        @for (item of filteredModel(); track item.label) {
+            @if (!item.separator) {
+                <li app-menuitem [item]="item" [root]="true"></li>
+            } @else {
+                <li class="menu-separator"></li>
+            }
+        }
+    </ul>`
+})
+export class AppMenu {
+    model: any[] = [
+        {
+            label: 'DashBoard',
+            icon: 'pi pi-home',
+            routerLink: ['/Inicio/dashboard']
+        },
+        {
+            label: 'Lista de usuarios',
+            icon: 'pi pi-user',
+            routerLink: ['/Inicio/usuarios'],
+            roles: ['administrador']
+        },
+        {
+            label: 'Lista de clientes',
+            icon: 'pi pi-users',
+            routerLink: ['/Inicio/clientes'],
+            roles: ['administrador']
+        },
+        {
+            label: 'Lista de MKT',
+            icon: 'pi pi-chart-line',
+            routerLink: ['/Inicio/MKT'],
+            roles: ['administrador']
+        },
+        {
+            label: 'Lista de CI/CD',
+            icon: 'pi pi-briefcase',
+            routerLink: ['/Inicio/Ci/Cd'],
+            roles: ['administrador']
+        },
+        {
+            label: 'Lista de proyectos',
+            icon: 'pi pi-clipboard',
+            routerLink: ['/Inicio/ListaProyectos']
+        },
+        {
+            label: 'Lista de horas',
+            icon: 'pi pi-clock',
+            routerLink: ['/Inicio/ListaHoras']
+        },
+        {
+            label: 'Lista de reportes',
+            icon: 'pi pi-file',
+            routerLink: ['/Inicio/ListaReportes'],
+            roles: ['administrador']
+        },
+        {
+            label: 'Lista de hosting',
+            icon: 'pi pi-server',
+            routerLink: ['/Inicio/ListaHosting'],
+            roles: ['administrador']
+        },
+    ];
+
+    filteredModel = computed(() => {
+        if (this.authService.isAdministrador()) {
+            return this.model;
+        } else {
+            const profile = this.authService.userProfile();
+            const role = (profile?.role || '').toLowerCase().trim();
+            const puesto = (profile?.jobPosition || '').toLowerCase().trim();
+
+            return this.model.filter(item => {
+                if (!item.roles) return true;
+                // Check if any of the item's allowed roles match the user's role or puesto
+                return item.roles.some((r: string) => {
+                    const lowR = r.toLowerCase().trim();
+                    const isMatched = lowR === role ||
+                        lowR === puesto ||
+                        (lowR === 'administrador' && (role === 'administración' || role === 'administracion' || puesto === 'administración' || puesto === 'administracion')) ||
+                        (lowR === 'desarrollador' && role === 'desarrollo');
+                    return isMatched;
+                });
+            });
+        }
+    });
+
+    constructor(private authService: AuthService) { }
+}
